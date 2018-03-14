@@ -1,14 +1,105 @@
 module.exports = function solveSudoku(matrix) {
   
-  /*     matrix =[  [0, 5, 0, 0, 7, 0, 0, 0, 1],
-                      [8, 7, 6, 0, 2, 1, 9, 0, 3],
-                      [0, 0, 0, 0, 3, 5, 0, 0, 0],
-                      [0, 0, 0, 0, 4, 3, 6, 1, 0],
-                      [0, 4, 0, 0, 0, 9, 0, 0, 2],
-                      [0, 1, 2, 0, 5, 0, 0, 0, 4],
-                      [0, 8, 9, 0, 6, 4, 0, 0, 0],
-                      [0, 0, 0, 0, 0, 7, 0, 0, 0],
-                      [1, 6, 7, 0, 0, 2, 5, 4, 0]];    */ 
+/*  var matrix =[ 
+    [0, 5, 0, 0, 7, 0, 0, 0, 1],
+              [8, 7, 6, 0, 2, 1, 9, 0, 3],
+              [0, 0, 0, 0, 3, 5, 0, 0, 0],
+              [0, 0, 0, 0, 4, 3, 6, 1, 0],
+              [0, 4, 0, 0, 0, 9, 0, 0, 2],
+              [0, 1, 2, 0, 5, 0, 0, 0, 4],
+              [0, 8, 9, 0, 6, 4, 0, 0, 0],
+              [0, 0, 0, 0, 0, 7, 0, 0, 0],
+              [1, 6, 7, 0, 0, 2, 5, 4, 0]
+    
+      ];
+    
+    */
+    
+    function Solver() {
+        this.mat = matrix;
+        this.backTr(0,-1);
+    };
+    
+    Solver.prototype.findMis = function (r, c) {          // поиск ошибок 
+        var value = this.mat[r][c]; 
+        var mist=true; 
+        var kvR = Math.floor(r / 3);
+        var kvC = Math.floor(c / 3);                     //          console.log('---========---');
+        for (var _c = 0; _c < 9; _c++) {                    // по сткокам
+            if (_c != c && this.mat[r][_c] == value) {
+                mist= false;
+            }
+        }
+        for (var _r = 0; _r < 9; _r++) {                   // по столбцам
+            if (_r != r && this.mat[_r][c] == value) {
+                mist= false;
+            }
+        }
+        for (var _r = kvR * 3; _r < kvR * 3 + 3; _r++) {                   // в квадранте
+            for (var _c = kvC * 3; _c < kvC * 3 + 3; _c++) {
+                if (_r != r && _c != c && this.mat[_r][_c] == value) {
+                   mist= false
+                }
+            }
+        }
+        return mist;
+    };
+    
+    Solver.prototype.backTr = function (r, c) {      // 
+        c++;                                             //          console.log(r,c);                                     
+        if (c > 8) {                                                  // переход на следующую строку елси уперся 
+            c = 0;
+            r++;
+            if (r > 8) {                                          // дошли до упора
+                return true;
+            }
+        }
+        if (this.mat[r][c] != 0) {                                // если ячейка задана переходим к следующей
+            if (!this.findMis(r, c)){
+                return false;
+            }
+            return this.backTr(r, c);
+        } else {                                                // перебираеи варианты числа
+            for (var x = 1; x < 10; x++) {
+                this.mat[r][c] = x;
+                if (this.findMis(r, c)){
+                    if (this.backTr(r, c)) {
+                        return true;
+                    }
+                }
+            }
+            this.mat[r][c] = 0;
+            return false;
+        }
+    };
+       
+    function solve(){
+            var solver = new Solver(); 
+            for(var row = 0; row < 9; row++){
+                for(var column = 0; column < 9; column ++){
+                    matrix[row][column] = solver.mat[row][column];
+                                                         //         console.log('----write in matrix---',row,'-',column,' = ',solver.mat[row][column]); 
+                }
+            }
+    }
+        
+    Solver.mat=matrix;
+    //   console.log(Solver.mat); 
+    solve();    
+    
+   // console.log(matrix);      
+   return matrix;  
+  }
+
+
+
+
+
+
+
+
+
+/* 
                     
 
   function elemInSq(elem,i,j){                          // функция поиска элемента в квадранте возвращает true/false
@@ -155,11 +246,11 @@ function whoIsNotI(){
         elemInN=0;                                        // счетчик для найденных возможностей
         for (let x=1; x<=9; x++){                         // запускаем цикл перебора Иксов 
                                
-          if (!elemInCol(x,j)){
-            if (!elemInStr(x,i)){
-              if (!elemInSq(x,Math.floor(i-i%3),Math.floor(j-j%3))){
-                elemInN++;
-                xp=x;                 
+          if (!elemInCol(x,j)){                           // если элемента нет в столбце
+            if (!elemInStr(x,i)){                         // если элемента нет с строке
+              if (!elemInSq(x,Math.floor(i-i%3),Math.floor(j-j%3))){        // если элемента нет в квадранте
+                elemInN++;                                // инкреминируем счетчик найденных возможностей
+                xp=x;                                       // сохраняем найденное значенин x
               }
             }
           }
@@ -174,6 +265,52 @@ function whoIsNotI(){
   return change;
 }
 
+function noChoice (){
+  let change=false; 
+  for (let i=0; i<9; i++){                                // цикл перебора всех строк по матрице
+    for (let j=0; j<9; j++){                              // цикл перебора всех столбцов по матрице
+      if (matrix[i][j]==0){                                    // если элемент пустой
+       
+        for (let x=1; x<=9; x++){                         // запускаем цикл перебора Иксов 
+          elemInN=0;                                        // счетчик для найденных возможностей
+          if (!elemInCol(x,j)){                           // если элемента нет в столбце
+            if (!elemInStr(x,i)){                         // если элемента нет с строке
+              if (!elemInSq(x,Math.floor(i-i%3),Math.floor(j-j%3))){        // если элемента нет в квадранте
+                for (let ii=0; ii<9; ii++){                                // цикл перебора строк в столбце
+                  if (!elemInStr(x,ii) && !elemInSq(x,Math.floor(ii-ii%3),Math.floor(j-j%3))){
+                    elemInN++;                       console.log( 'i=',i,' j=',j,'string (ii)=',ii,'==',x,'==  elemInN=',elemInN)         // инкреминируем счетчик найденных возможностей
+                  }
+                }
+                for (let jj=0; jj<9; jj++){                                // цикл перебора столбцов в строке
+                  if (!elemInCol(x,jj) && !elemInSq(x,Math.floor(i-i%3),Math.floor(jj-jj%3))){
+                    elemInN++;                     console.log( 'i=',i,' j=',j,'string (jj)=',jj,'==',x,'==  elemInN=',elemInN)           // инкреминируем счетчик найденных возможностей
+                  }
+                }
+                for (let iik=Math.floor(i-i%3); iik<Math.floor(i-i%3)+3; iik++){
+                  for (let jjk=Math.floor(j-j%3); jjk<Math.floor(j-j%3)+3; jjk++){
+                    if (!elemInCol(x,jjk) && !elemInStr(x,iik)){
+                      elemInN++;                                  console.log( 'i=',i,' j=',j,'string (jj)=',jj,'==',x,'==  elemInN=',elemInN)
+                    }
+                  }
+                }
+
+
+              }
+            }
+          }
+          if (elemInN==1){                                        // если найдена только одна позиция для цифры
+            matrix[i][j]=x;     console.log('============found===============',xp,'---->',i,'-',j,'   jj=');      // утанавливаем найденный элемент в матрицу
+            change=true;
+          }
+        }
+      }
+    }
+  }
+                      //       matrix[1][1]=1;
+  return change;
+}
+
+
 
 let ggg=0
 do {
@@ -182,10 +319,11 @@ do {
   lhs=lastHeroStr();
   lhc=lastHeroCol();
   win=whoIsNotI();
-//  console.log(lh,lhs,lhc,ggg,win);
+  nc=noChoice ();
+ // console.log(lh,lhs,lhc,ggg,win,nc);
 //  
-  } while (/*( lh || lhs)*//*  &&*/ ggg<20);
+//  } while (/*( lh || lhs)*//*  &&  /// ggg<     1     );
 //console.log(matrix);
 
-return matrix;  }
+return matrix;  }                 */ 
 
